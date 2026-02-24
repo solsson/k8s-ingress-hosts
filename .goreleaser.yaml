@@ -1,0 +1,24 @@
+version: 2
+
+builds:
+  - main: glasses.go
+    binary: k8s-ingress-hosts
+    env:
+      - CGO_ENABLED=0
+    ldflags:
+      - -s -w -X main.version={{.Version}}
+    goos:
+      - linux
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+
+archives:
+  - format: binary
+
+checksum:
+  name_template: "checksums.txt"
+
+changelog:
+  sort: asc
