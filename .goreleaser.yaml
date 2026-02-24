@@ -15,7 +15,7 @@ builds:
       - arm64
 
 archives:
-  - format: binary
+  - formats: [binary]
 
 checksum:
   name_template: "checksums.txt"
