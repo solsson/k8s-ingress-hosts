@@ -179,25 +179,25 @@ func main() {
 		}
 	}
 
-	// Collect from Gateway API HTTPRoute resources
+	// Collect from Gateway API route resources (HTTPRoute + GRPCRoute)
 	dynClient, err := dynamic.NewForConfig(config)
 	if err != nil {
 		log.Fatalln(err.Error())
 	}
 
-	httpRouteGVR := schema.GroupVersionResource{
-		Group:    "gateway.networking.k8s.io",
-		Version:  "v1",
-		Resource: "httproutes",
+	gwAddressCache := make(map[string]string)
+
+	gatewayRouteGVRs := []schema.GroupVersionResource{
+		{Group: "gateway.networking.k8s.io", Version: "v1", Resource: "httproutes"},
+		{Group: "gateway.networking.k8s.io", Version: "v1", Resource: "grpcroutes"},
 	}
 
-	routes, err := dynClient.Resource(httpRouteGVR).Namespace("").List(context.TODO(), metaV1.ListOptions{})
-	if err != nil {
-		// Gateway API may not be installed, skip silently
-		fmt.Fprintf(os.Stderr, "# note: could not list HTTPRoutes: %v\n", err)
-	} else {
-		// Cache gateway addresses to avoid repeated lookups
-		gwAddressCache := make(map[string]string)
+	for _, routeGVR := range gatewayRouteGVRs {
+		routes, err := dynClient.Resource(routeGVR).Namespace("").List(context.TODO(), metaV1.ListOptions{})
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "# note: could not list %s: %v\n", routeGVR.Resource, err)
+			continue
+		}
 
 		for _, route := range routes.Items {
 			routeName := route.GetName()
@@ -208,7 +208,6 @@ func main() {
 				continue
 			}
 
-			// Get hostnames from the HTTPRoute
 			hostnames, _ := spec["hostnames"].([]interface{})
 
 			// Resolve address from parent Gateway refs
