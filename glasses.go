@@ -27,6 +27,7 @@ var (
 	version       = "dev"
 	hostFile      = flag.String("host-file", "/etc/hosts", "host file location")
 	writeHostFile = flag.Bool("write", false, "rewrite host file?")
+	overrideIP    = flag.String("override-ip", "", "use this IP for all entries instead of discovered addresses")
 	showVersion   = flag.Bool("version", false, "show version and exit")
 	kubeconfig    = flag.String("kubeconfig", "", "absolute path to the kubeconfig file")
 )
@@ -249,6 +250,12 @@ func main() {
 					Service: fmt.Sprintf("%s/%s", routeNamespace, routeName),
 				})
 			}
+		}
+	}
+
+	if *overrideIP != "" {
+		for i := range entries {
+			entries[i].Address = *overrideIP
 		}
 	}
 
